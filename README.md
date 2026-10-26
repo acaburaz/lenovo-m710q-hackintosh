@@ -57,6 +57,11 @@ Ethernet MAC – or put them in `smbios.json` and rebuild (see below).
   uses **itlwm.kext**. The card appears as an extra Ethernet port (`en1`); join networks with the
   **[HeliPort](https://github.com/OpenIntelWireless/HeliPort)** menu-bar app (tick *Launch at
   Login*). Copy HeliPort to /Applications – its DMG asks you to accept its BSD-3 license.
+* **Tested and not working: AirportItlwm v2.3.0 *Sonoma 14.4* build on Sequoia 15.8.1**
+  (`build_efi.py ... --airportitlwm`). OpenCore refuses it at boot with
+  `OC: Prelinked injection AirportItlwm.kext - Invalid Parameter` – Sequoia's IO80211Family
+  (1200.13.1) no longer matches what the Sonoma build links against. Nothing crashes; there is just
+  no Wi-Fi. Stay on itlwm until OpenIntelWireless ships a Sequoia build.
 * **Bluetooth:** `BlueToolFixup` (Lilu plugin from BrcmPatchRAM) + `IntelBTPatcher` +
   `IntelBluetoothFirmware`. Do **not** add `IntelBluetoothInjector` on macOS 12+. Set the two
   NVRAM variables above. macOS then reports the controller as `THIRD_PARTY_DONGLE` – that's fine.

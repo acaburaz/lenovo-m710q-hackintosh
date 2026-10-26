@@ -5,6 +5,8 @@ usage: build_efi.py ROOT [profile] [--upgrade]
   sequoia      iMac19,1, native KBL framebuffer           -> ROOT/EFI-sequoia   (recommended)
   sequoia-cfl  iMac19,1, iGPU spoofed as CFL UHD 630      -> ROOT/EFI-sequoia-cfl (not needed, see README)
   --upgrade    add -igfxvesa so the Ventura -> Sequoia installer stage does not hang on a black screen
+  --airportitlwm  use AirportItlwm (native Wi-Fi menu) instead of itlwm + HeliPort
+                  (the Sonoma 14.4 build does NOT load on Sequoia 15.8.1, see README)
 
 ROOT must contain the extracted downloads (see scripts/fetch.sh) and may contain
 smbios.json with your own generated identifiers (never commit it):
@@ -18,6 +20,7 @@ args = [a for a in sys.argv[1:] if not a.startswith("--")]
 ROOT = Path(args[0])
 PROFILE = args[1] if len(args) > 1 else "sequoia"
 UPGRADE = "--upgrade" in sys.argv
+AIRPORT = "--airportitlwm" in sys.argv
 X = ROOT / "x"
 OC = X / "OpenCore-1.0.8-RELEASE"
 OUT = ROOT / {"ventura": "EFI", "sequoia": "EFI-sequoia", "sequoia-cfl": "EFI-sequoia-cfl"}[PROFILE]
@@ -59,8 +62,10 @@ kexts = [
     ("IntelMausi.kext", X / "IntelMausi-1.0.8-RELEASE", True),
     ("USBToolBox.kext", X / "USBToolBox-1.2.0-RELEASE", True),
     ("UTBDefault.kext", X / "USBToolBox-1.2.0-RELEASE", False),
-    # Intel Wireless 8265: Wi-Fi via itlwm (+ HeliPort app), Bluetooth for macOS 12+
-    ("itlwm.kext", X / "itlwm_v2.3.0_stable.kext", True),
+    # Intel Wireless 8265: Wi-Fi via itlwm (+ HeliPort app) or, experimental on Sequoia,
+    # AirportItlwm (Sonoma 14.4 build, native Wi-Fi menu). Never both. Bluetooth for macOS 12+.
+    ("AirportItlwm.kext", X / "AirportItlwm_v2.3.0_stable_Sonoma14.4", True) if AIRPORT
+    else ("itlwm.kext", X / "itlwm_v2.3.0_stable.kext", True),
     ("BlueToolFixup.kext", X / "BrcmPatchRAM-2.7.2-RELEASE", True),
     ("IntelBTPatcher.kext", X / "IntelBluetooth-v2.4.0", True),
     ("IntelBluetoothFirmware.kext", X / "IntelBluetooth-v2.4.0", True),
