@@ -6,7 +6,8 @@ was done headless through a **PiKVM** (virtual USB drive + keyboard/mouse + HDMI
 there are also notes on driving a Hackintosh install over a KVM.
 
 > Status (2026-10-26): Sequoia 15.8.1 boots from the internal SSD with full graphics
-> acceleration (Metal 3), Ethernet, USB. Wi-Fi and audio layout not configured yet.
+> acceleration (Metal 3), Ethernet, USB, Bluetooth and Wi-Fi (itlwm + HeliPort).
+> Audio layout and a proper USB map not configured yet.
 
 ## Hardware
 
@@ -18,7 +19,8 @@ there are also notes on driving a Hackintosh install over a KVM.
 | RAM | 8 GB DDR4-2400 | ✅ |
 | Storage | Kingston A400 240 GB SATA | ✅ |
 | Ethernet | Intel I219-V | ✅ IntelMausi |
-| Wi-Fi/BT | Intel Wireless 8265 (`8086:24FD`) | ⏳ not set up (use itlwm / AirportItlwm + IntelBluetoothFirmware) |
+| Wi-Fi | Intel Wireless 8265 (`8086:24FD`) | ✅ itlwm 2.3.0 + HeliPort app (no AirDrop/Continuity) |
+| Bluetooth | Intel 8265 BT (`8087:0A2B`, internal USB) | ✅ IntelBluetoothFirmware 2.4.0 + IntelBTPatcher + BlueToolFixup |
 | Audio | Realtek (AppleALC loaded) | ⏳ no `layout-id` chosen yet |
 | Video out | DisplayPort only (no HDMI) | ✅ via DP→HDMI adapter, see connector patch |
 
@@ -26,7 +28,8 @@ there are also notes on driving a Hackintosh install over a KVM.
 
 * OpenCore **1.0.8**
 * Kexts: Lilu 1.7.2, VirtualSMC 1.3.8 (+SMCProcessor, SMCSuperIO), WhateverGreen 1.7.1,
-  AppleALC 1.9.8, IntelMausi 1.0.8, USBToolBox 1.2.0 + UTBDefault (generic map – make your own)
+  AppleALC 1.9.8, IntelMausi 1.0.8, USBToolBox 1.2.0 + UTBDefault (generic map – make your own),
+  itlwm 2.3.0, BlueToolFixup 2.7.2 (from BrcmPatchRAM), IntelBTPatcher + IntelBluetoothFirmware 2.4.0
 * ACPI: Dortania prebuilt `SSDT-PLUG-DRTNIA`, `SSDT-EC-USBX-DESKTOP` (no AWAC needed on 200-series)
 * Drivers: OpenRuntime, OpenHfsPlus, ResetNvramEntry
 * SMBIOS **iMac19,1** (Sequoia) / iMac18,1 (Ventura)
@@ -46,6 +49,17 @@ Ethernet MAC – or put them in `smbios.json` and rebuild (see below).
 | `AppleXcpmCfgLock` | true | CFG Lock can't be disabled in the Lenovo BIOS menu. |
 | `DisableIoMapper` | true | Instead of disabling VT-d. |
 | `prev-lang:kbd` | `en-US:0` | ⚠️ OpenCore's `Sample.plist` ships `ru-RU:252` – the installer comes up in Russian otherwise. |
+| `bluetoothExternalDongleFailed` = `00`, `bluetoothInternalControllerInfo` = 14 × `00` | NVRAM Add (+Delete) | Required by BlueToolFixup for Intel Bluetooth. Without them the controller shows `Address: NULL`, `State: Off`. |
+
+## Wi-Fi and Bluetooth (Intel 8265)
+
+* **Wi-Fi:** OpenIntelWireless has no AirportItlwm build for Sequoia (latest: Sonoma 14.4), so this
+  uses **itlwm.kext**. The card appears as an extra Ethernet port (`en1`); join networks with the
+  **[HeliPort](https://github.com/OpenIntelWireless/HeliPort)** menu-bar app (tick *Launch at
+  Login*). Copy HeliPort to /Applications – its DMG asks you to accept its BSD-3 license.
+* **Bluetooth:** `BlueToolFixup` (Lilu plugin from BrcmPatchRAM) + `IntelBTPatcher` +
+  `IntelBluetoothFirmware`. Do **not** add `IntelBluetoothInjector` on macOS 12+. Set the two
+  NVRAM variables above. macOS then reports the controller as `THIRD_PARTY_DONGLE` – that's fine.
 
 ## BIOS
 
@@ -124,7 +138,7 @@ disabled**. Nothing else changed.
 ## Credits / licenses
 
 OpenCore, Lilu, VirtualSMC, WhateverGreen, AppleALC, IntelMausi (acidanthera, BSD-3-Clause),
-USBToolBox (dhinakg), ACPI tables from the Dortania guides. Follow the
+USBToolBox (dhinakg), itlwm / IntelBluetoothFirmware / HeliPort (OpenIntelWireless, zxystd), BrcmPatchRAM (acidanthera), ACPI tables from the Dortania guides. Follow the
 [Dortania OpenCore Install Guide](https://dortania.github.io/OpenCore-Install-Guide/) for the
 background on every setting above.
 

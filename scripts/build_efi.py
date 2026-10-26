@@ -59,6 +59,11 @@ kexts = [
     ("IntelMausi.kext", X / "IntelMausi-1.0.8-RELEASE", True),
     ("USBToolBox.kext", X / "USBToolBox-1.2.0-RELEASE", True),
     ("UTBDefault.kext", X / "USBToolBox-1.2.0-RELEASE", False),
+    # Intel Wireless 8265: Wi-Fi via itlwm (+ HeliPort app), Bluetooth for macOS 12+
+    ("itlwm.kext", X / "itlwm_v2.3.0_stable.kext", True),
+    ("BlueToolFixup.kext", X / "BrcmPatchRAM-2.7.2-RELEASE", True),
+    ("IntelBTPatcher.kext", X / "IntelBluetooth-v2.4.0", True),
+    ("IntelBluetoothFirmware.kext", X / "IntelBluetooth-v2.4.0", True),
 ]
 for k, src, _ in kexts:
     shutil.copytree(src / k, oc / "Kexts" / k)
@@ -131,6 +136,11 @@ nv["boot-args"] = "-v keepsyms=1 debug=0x100 igfxonln=1" + (" -igfxvesa" if UPGR
 nv["csr-active-config"] = bytes.fromhex("00000000")
 nv["prev-lang:kbd"] = b"en-US:0"   # Sample.plist ships ru-RU:252
 p["NVRAM"]["Delete"]["7C436110-AB2A-4BBB-A880-FE41995C9F82"].append("prev-lang:kbd")
+# Intel Bluetooth with BlueToolFixup (see BrcmPatchRAM README)
+nv["bluetoothExternalDongleFailed"] = bytes.fromhex("00")
+nv["bluetoothInternalControllerInfo"] = bytes(14)
+p["NVRAM"]["Delete"]["7C436110-AB2A-4BBB-A880-FE41995C9F82"] += [
+    "bluetoothExternalDongleFailed", "bluetoothInternalControllerInfo"]
 p["NVRAM"]["WriteFlash"] = True
 
 # PlatformInfo
