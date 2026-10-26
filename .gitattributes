@@ -1,0 +1,4 @@
+* text=auto eol=lf
+*.efi binary
+*.aml binary
+EFI/OC/Kexts/**/MacOS/* binary

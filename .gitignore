@@ -1,0 +1,8 @@
+# Your own SMBIOS identifiers must never be published
+smbios.json
+# Build inputs (re-download with scripts/fetch.sh)
+dl/
+x/
+recovery/
+*.img
+*.dmg
