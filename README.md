@@ -97,6 +97,22 @@ disabled**. Nothing else changed.
 * macOS can't mount a read-only FAT MSD (`failed to mount`) – copy files over SSH instead.
 * Ctrl+Alt+Del from the PiKVM resets the machine while OpenCore/firmware is running; once macOS
   hangs you need the power button (or wired ATX).
+* After the install, present the PiKVM as a plain keyboard/mouse and drop the virtual drive
+  (`/etc/kvmd/override.yaml`, then `systemctl restart kvmd-otg kvmd`):
+  ```yaml
+  otg:
+      manufacturer: Generic
+      product: USB Keyboard and Mouse
+      devices:
+          msd:
+              start: false
+  kvmd:
+      msd:
+          type: disabled
+  ```
+  macOS then shows "Generic – USB Keyboard and Mouse" and no external disk.
+* OpenCore default entry: SIP blocks `bless --setBoot`, so select *Macintosh HD* in the picker
+  and press **Ctrl+Enter** once (`AllowSetDefault` is enabled).
 * `pikvm/` has the small helpers used here (run on the PiKVM as root, they use the local
   `kvmd` unix socket, which accepts root without a password):
   * `k.sh` – `key F12`, `combo ControlLeft,AltLeft,Delete`, `click X Y`, `text "..."`, `snap`
