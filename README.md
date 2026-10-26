@@ -77,7 +77,8 @@ disabled**. Nothing else changed.
    ```bash
    scripts/fetch.sh ~/m710q              # downloads exact versions into ~/m710q/{dl,x}
    python3 scripts/build_efi.py ~/m710q ventura      # for the first install
-   python3 scripts/build_efi.py ~/m710q sequoia      # final config
+   python3 scripts/build_efi.py ~/m710q sequoia      # final config (debug: -v, debug=0x100)
+   python3 scripts/build_efi.py ~/m710q sequoia --release   # daily use once stable
    ```
 2. **Install Ventura first** from a Ventura recovery image
    (`macrecovery.py -b Mac-4B682C642B45593E -m 00000000000000000 download`) with the `ventura`
@@ -87,6 +88,20 @@ disabled**. Nothing else changed.
 4. **Upgrade to Sequoia with `-igfxvesa` added** (`build_efi.py ... sequoia --upgrade`, or add the
    boot-arg temporarily). See the pitfall below.
 5. After Sequoia reaches the desktop, remove `-igfxvesa` again → full acceleration.
+
+## Daily use: sleep off, quiet boot
+
+* **Sleep/wake is not fixed on this build** (no custom USB map). With the default power settings
+  (system sleep after 1 min idle) the Mac went to sleep and hung – no panic, just a frozen machine
+  that eventually reset. Disable system sleep, keep display sleep:
+  ```bash
+  sudo pmset -a sleep 0 hibernatemode 0 standby 0 powernap 0 disksleep 0 proximitywake 0
+  sudo rm -f /var/vm/sleepimage
+  ```
+* Once everything works, build with `--release`: boot-args `keepsyms=1 igfxonln=1` (no `-v`, no
+  `debug=0x100`, so a kernel panic reboots instead of halting) and a 5 s picker timeout.
+* Known: `bluetoothd` occasionally segfaults (Intel 8265 + BlueToolFixup on Sequoia); launchd
+  restarts it and Bluetooth keeps working.
 
 ## Pitfalls we hit (and fixes)
 

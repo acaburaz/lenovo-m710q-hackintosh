@@ -5,6 +5,7 @@ usage: build_efi.py ROOT [profile] [--upgrade]
   sequoia      iMac19,1, native KBL framebuffer           -> ROOT/EFI-sequoia   (recommended)
   sequoia-cfl  iMac19,1, iGPU spoofed as CFL UHD 630      -> ROOT/EFI-sequoia-cfl (not needed, see README)
   --upgrade    add -igfxvesa so the Ventura -> Sequoia installer stage does not hang on a black screen
+  --release    daily use: no -v / debug=0x100 (panics reboot), picker timeout 5 s
   --airportitlwm  use AirportItlwm (native Wi-Fi menu) instead of itlwm + HeliPort
                   (the Sonoma 14.4 build does NOT load on Sequoia 15.8.1, see README)
 
@@ -21,6 +22,7 @@ ROOT = Path(args[0])
 PROFILE = args[1] if len(args) > 1 else "sequoia"
 UPGRADE = "--upgrade" in sys.argv
 AIRPORT = "--airportitlwm" in sys.argv
+RELEASE = "--release" in sys.argv
 X = ROOT / "x"
 OC = X / "OpenCore-1.0.8-RELEASE"
 OUT = ROOT / {"ventura": "EFI", "sequoia": "EFI-sequoia", "sequoia-cfl": "EFI-sequoia-cfl"}[PROFILE]
@@ -124,7 +126,7 @@ p["Kernel"]["Quirks"].update({
 })
 
 # Misc
-p["Misc"]["Boot"].update({"HideAuxiliary": False, "PickerMode": "Builtin", "ShowPicker": True, "Timeout": 10})
+p["Misc"]["Boot"].update({"HideAuxiliary": False, "PickerMode": "Builtin", "ShowPicker": True, "Timeout": 5 if RELEASE else 10})
 p["Misc"]["Debug"].update({"AppleDebug": True, "ApplePanic": True, "DisableWatchDog": True, "Target": 67})
 p["Misc"]["Security"].update({
     "AllowSetDefault": True, "BlacklistAppleUpdate": True, "ScanPolicy": 0,
@@ -137,7 +139,9 @@ for t in p["Misc"]["Tools"]:
 
 # NVRAM
 nv = p["NVRAM"]["Add"]["7C436110-AB2A-4BBB-A880-FE41995C9F82"]
-nv["boot-args"] = "-v keepsyms=1 debug=0x100 igfxonln=1" + (" -igfxvesa" if UPGRADE else "")
+# --release: quiet boot, and a kernel panic reboots instead of halting on the panic screen
+nv["boot-args"] = ("keepsyms=1 igfxonln=1" if RELEASE else "-v keepsyms=1 debug=0x100 igfxonln=1") \
+    + (" -igfxvesa" if UPGRADE else "")
 nv["csr-active-config"] = bytes.fromhex("00000000")
 nv["prev-lang:kbd"] = b"en-US:0"   # Sample.plist ships ru-RU:252
 p["NVRAM"]["Delete"]["7C436110-AB2A-4BBB-A880-FE41995C9F82"].append("prev-lang:kbd")
